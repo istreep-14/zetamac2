@@ -1,0 +1,127 @@
+.test-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 80vh;
+  animation: fadeIn 0.3s ease;
+}
+
+.game-header {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+}
+
+.timer {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+  color: #e2b714;
+}
+
+.stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.stat.correct {
+  color: #4ade80;
+}
+
+.stat.total {
+  color: #888;
+}
+
+.stat.accuracy {
+  color: #60a5fa;
+}
+
+.game-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  margin-top: 5rem;
+}
+
+.problem-display {
+  font-size: 4rem;
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+  color: #e0e0e0;
+  animation: problemSlide 0.2s ease;
+}
+
+.answer-input {
+  font-size: 3rem;
+  max-width: 400px;
+  padding: 1.5rem;
+  animation: inputFocus 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes problemSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes inputFocus {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .game-header {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .stats {
+    gap: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .timer {
+    font-size: 2rem;
+  }
+  
+  .problem-display {
+    font-size: 2.5rem;
+  }
+  
+  .answer-input {
+    font-size: 2rem;
+    max-width: 250px;
+  }
+}

@@ -1,0 +1,152 @@
+.test-config {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  animation: fadeIn 0.3s ease;
+}
+
+.config-container {
+  max-width: 700px;
+  width: 100%;
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 3rem;
+}
+
+.config-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #e2b714;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.config-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.operators-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.operator-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border: 2px solid #2a2a2a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.operator-option:hover {
+  border-color: #3a3a3a;
+  background: #222;
+}
+
+.operator-option input[type="checkbox"]:checked + span {
+  color: #e2b714;
+  font-weight: 600;
+}
+
+.difficulty-buttons,
+.duration-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.difficulty-buttons button,
+.duration-buttons button {
+  flex: 1;
+  min-width: 80px;
+}
+
+.difficulty-info {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+}
+
+.range-display {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  color: #888;
+}
+
+.range-label {
+  font-weight: 500;
+}
+
+.range-value {
+  font-family: 'Roboto Mono', monospace;
+  color: #e0e0e0;
+}
+
+.start-section {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.start-button {
+  font-size: 1.25rem;
+  padding: 1rem 3rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.hint {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+kbd {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-family: 'Roboto Mono', monospace;
+  color: #e2b714;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .config-container {
+    padding: 2rem;
+  }
+  
+  .operators-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .difficulty-buttons,
+  .duration-buttons {
+    flex-direction: column;
+  }
+}
