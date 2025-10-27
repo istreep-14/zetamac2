@@ -15,6 +15,16 @@ function TestGame({ config, onFinish }) {
   const problemHistoryRef = useRef([])
   const correctCountRef = useRef(0)
   const totalAttemptsRef = useRef(0)
+  
+  // Track attempts for current problem
+  const currentAttemptDataRef = useRef({
+    keystrokes: 0,
+    backspaces: 0,
+    fullAttempts: 0, // Number of times answer reached expected digit length
+    lastInputTime: null,
+    attemptTimestamps: [],
+    inputHistory: [] // Track all inputs for analysis
+  })
 
   useEffect(() => {
     generateNewProblem()
@@ -26,7 +36,6 @@ function TestGame({ config, onFinish }) {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current)
-          // Defer the finish call to avoid setState during render
           setTimeout(() => {
             endGame()
           }, 0)
@@ -96,6 +105,16 @@ function TestGame({ config, onFinish }) {
     }
     
     setCurrentProblem(problem)
+    
+    // Reset attempt tracking for new problem
+    currentAttemptDataRef.current = {
+      keystrokes: 0,
+      backspaces: 0,
+      fullAttempts: 0,
+      lastInputTime: Date.now(),
+      attemptTimestamps: [],
+      inputHistory: []
+    }
   }
 
   const randomInRange = (min, max) => {
@@ -104,16 +123,85 @@ function TestGame({ config, onFinish }) {
 
   const handleAnswerChange = (e) => {
     const value = e.target.value
+    const previousValue = answer
+    const now = Date.now()
+    
+    // Track this input
+    const attemptData = currentAttemptDataRef.current
+    
+    // Detect backspace (value got shorter)
+    if (value.length < previousValue.length) {
+      attemptData.backspaces++
+    } else if (value.length > previousValue.length) {
+      // New character typed
+      attemptData.keystrokes++
+    }
+    
+    // Track if we've reached a full attempt (matching digit length)
+    if (currentProblem && value.length === currentProblem.answer.toString().length) {
+      // Check if enough time passed (500ms) to consider it a new attempt
+      const timeSinceLastInput = attemptData.lastInputTime ? now - attemptData.lastInputTime : 0
+      
+      if (timeSinceLastInput > 500 || attemptData.fullAttempts === 0) {
+        attemptData.fullAttempts++
+        attemptData.attemptTimestamps.push(now)
+      }
+    }
+    
+    attemptData.lastInputTime = now
+    attemptData.inputHistory.push({
+      value,
+      timestamp: now,
+      wasBackspace: value.length < previousValue.length
+    })
+    
     if (value === '' || /^-?\d+$/.test(value)) {
       setAnswer(value)
       
       // Check if answer is correct immediately
       if (value !== '' && currentProblem && parseInt(value) === currentProblem.answer) {
-        // Use setTimeout to defer the state update
         setTimeout(() => {
           checkAnswer(value)
         }, 0)
       }
+    }
+  }
+
+  const calculateAttemptMetrics = () => {
+    const attemptData = currentAttemptDataRef.current
+    const expectedLength = currentProblem.answer.toString().length
+    
+    // Calculate attempts based on:
+    // 1. Number of times we had full-length input
+    // 2. Backspace clusters (consecutive backspaces count as rethinking)
+    let backspaceClusters = 0
+    let consecutiveBackspaces = 0
+    
+    for (const input of attemptData.inputHistory) {
+      if (input.wasBackspace) {
+        consecutiveBackspaces++
+      } else {
+        if (consecutiveBackspaces > 0) {
+          backspaceClusters++
+          consecutiveBackspaces = 0
+        }
+      }
+    }
+    
+    if (consecutiveBackspaces > 0) backspaceClusters++
+    
+    // Estimate attempts: either full-length attempts or backspace clusters
+    const estimatedAttempts = Math.max(
+      attemptData.fullAttempts,
+      backspaceClusters,
+      1 // At least 1 attempt
+    )
+    
+    return {
+      attempts: estimatedAttempts,
+      keystrokes: attemptData.keystrokes,
+      backspaces: attemptData.backspaces,
+      firstTryCorrect: estimatedAttempts === 1
     }
   }
 
@@ -122,22 +210,25 @@ function TestGame({ config, onFinish }) {
 
     const isCorrect = parseInt(answerValue) === currentProblem.answer
     const timeTaken = Date.now() - currentProblem.timestamp
+    const metrics = calculateAttemptMetrics()
 
     const newProblem = {
       ...currentProblem,
       userAnswer: parseInt(answerValue),
       correct: isCorrect,
-      timeTaken
+      timeTaken,
+      ...metrics // Add attempt metrics
     }
 
     // Update refs
     problemHistoryRef.current = [...problemHistoryRef.current, newProblem]
-    if (isCorrect) correctCountRef.current += 1
+    // Only count as correct if it was first try
+    if (isCorrect && metrics.firstTryCorrect) correctCountRef.current += 1
     totalAttemptsRef.current += 1
 
     // Update state
     setProblemHistory(prev => [...prev, newProblem])
-    if (isCorrect) setCorrectCount(prev => prev + 1)
+    if (isCorrect && metrics.firstTryCorrect) setCorrectCount(prev => prev + 1)
     setTotalAttempts(prev => prev + 1)
     
     setAnswer('')
@@ -145,18 +236,23 @@ function TestGame({ config, onFinish }) {
   }
 
   const endGame = () => {
-    // Use ref values which have the most current data
+    // Calculate first-try accuracy
+    const firstTryCorrect = problemHistoryRef.current.filter(p => p.firstTryCorrect).length
+    const totalProblems = totalAttemptsRef.current
+    
     const results = {
-      totalProblems: totalAttemptsRef.current,
-      correctAnswers: correctCountRef.current,
-      accuracy: totalAttemptsRef.current > 0 
-        ? (correctCountRef.current / totalAttemptsRef.current * 100).toFixed(1) 
+      totalProblems,
+      correctAnswers: correctCountRef.current, // First-try correct
+      firstTryCorrect, // Should be same as correctAnswers
+      eventuallyCorrect: problemHistoryRef.current.filter(p => p.correct).length,
+      accuracy: totalProblems > 0 
+        ? (firstTryCorrect / totalProblems * 100).toFixed(1) 
         : 0,
       duration: config.duration,
       problemHistory: problemHistoryRef.current,
       config
     }
-    console.log('Ending game with results:', results) // Debug log
+    console.log('Ending game with results:', results)
     onFinish(results)
   }
 
@@ -166,15 +262,17 @@ function TestGame({ config, onFinish }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const currentAccuracy = totalAttempts > 0 ? ((correctCount / totalAttempts) * 100).toFixed(0) : 0
+
   return (
     <div className="test-game">
       <div className="game-header">
         <div className="timer">{formatTime(timeLeft)}</div>
         <div className="stats">
-          <span className="stat correct">{correctCount} correct</span>
+          <span className="stat correct">{correctCount} first-try</span>
           <span className="stat total">{totalAttempts} total</span>
           <span className="stat accuracy">
-            {totalAttempts > 0 ? ((correctCount / totalAttempts) * 100).toFixed(0) : 0}% accuracy
+            {currentAccuracy}% first-try
           </span>
         </div>
       </div>
