@@ -1,7 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import './Results.css'
 
 function Results({ results, onRestart, onDashboard }) {
+  const qpmChartRef = useRef(null)
+  const attemptsChartRef = useRef(null)
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.code === 'Space') {
@@ -14,13 +17,157 @@ function Results({ results, onRestart, onDashboard }) {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [onRestart])
 
+  useEffect(() => {
+    if (results && results.problemHistory.length > 0) {
+      drawQPMChart()
+      drawAttemptsChart()
+    }
+  }, [results])
+
+  const drawQPMChart = () => {
+    const canvas = qpmChartRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    const width = canvas.width
+    const height = canvas.height
+    const padding = 40
+    const chartWidth = width - padding * 2
+    const chartHeight = height - padding * 2
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height)
+
+    // Calculate QPM for each problem (problems per minute at that point)
+    const history = results.problemHistory
+    const qpmData = []
+    const attemptsData = []
+    const errorsData = [] // Track attempts > 1 as errors
+    
+    for (let i = 0; i < history.length; i++) {
+      const elapsedTime = (history[i].timestamp - history[0].timestamp) / 1000 / 60 // minutes
+      const problemsCompleted = i + 1
+      const currentQPM = elapsedTime > 0 ? problemsCompleted / elapsedTime : 0
+      qpmData.push(currentQPM)
+      attemptsData.push(history[i].attempts || 1)
+      errorsData.push(history[i].attempts > 1 ? 1 : 0)
+    }
+
+    const maxQPM = Math.max(...qpmData)
+    const minQPM = Math.min(...qpmData)
+    
+    // Draw grid lines
+    ctx.strokeStyle = '#2a2a2a'
+    ctx.lineWidth = 1
+    for (let i = 0; i <= 5; i++) {
+      const y = padding + (chartHeight / 5) * i
+      ctx.beginPath()
+      ctx.moveTo(padding, y)
+      ctx.lineTo(width - padding, y)
+      ctx.stroke()
+    }
+
+    // Draw QPM line
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    
+    for (let i = 0; i < qpmData.length; i++) {
+      const x = padding + (chartWidth / (qpmData.length - 1)) * i
+      const normalizedQPM = maxQPM > minQPM ? (qpmData[i] - minQPM) / (maxQPM - minQPM) : 0.5
+      const y = padding + chartHeight - normalizedQPM * chartHeight
+      
+      if (i === 0) {
+        ctx.moveTo(x, y)
+      } else {
+        ctx.lineTo(x, y)
+      }
+    }
+    ctx.stroke()
+
+    // Draw error markers (red dots for attempts > 1)
+    ctx.fillStyle = '#f87171'
+    for (let i = 0; i < errorsData.length; i++) {
+      if (errorsData[i] > 0) {
+        const x = padding + (chartWidth / (qpmData.length - 1)) * i
+        const normalizedQPM = maxQPM > minQPM ? (qpmData[i] - minQPM) / (maxQPM - minQPM) : 0.5
+        const y = padding + chartHeight - normalizedQPM * chartHeight
+        
+        ctx.beginPath()
+        ctx.arc(x, y, 4, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+
+    // Draw labels
+    ctx.fillStyle = '#888'
+    ctx.font = '12px monospace'
+    ctx.fillText(`${maxQPM.toFixed(0)}`, 5, padding + 5)
+    ctx.fillText(`${minQPM.toFixed(0)}`, 5, height - padding + 5)
+  }
+
+  const drawAttemptsChart = () => {
+    const canvas = attemptsChartRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    const width = canvas.width
+    const height = canvas.height
+    const padding = 40
+    const chartWidth = width - padding * 2
+    const chartHeight = height - padding * 2
+
+    ctx.clearRect(0, 0, width, height)
+
+    const history = results.problemHistory
+    const attemptsData = history.map(p => p.attempts || 1)
+    const maxAttempts = Math.max(...attemptsData, 3)
+
+    // Draw grid
+    ctx.strokeStyle = '#2a2a2a'
+    ctx.lineWidth = 1
+    for (let i = 0; i <= maxAttempts; i++) {
+      const y = padding + (chartHeight / maxAttempts) * i
+      ctx.beginPath()
+      ctx.moveTo(padding, y)
+      ctx.lineTo(width - padding, y)
+      ctx.stroke()
+    }
+
+    // Draw bars
+    const barWidth = Math.max(2, chartWidth / attemptsData.length - 2)
+    for (let i = 0; i < attemptsData.length; i++) {
+      const x = padding + (chartWidth / attemptsData.length) * i
+      const normalizedAttempts = attemptsData[i] / maxAttempts
+      const barHeight = normalizedAttempts * chartHeight
+      const y = height - padding - barHeight
+
+      // Color based on attempts: 1 = green, 2 = yellow, 3+ = red
+      if (attemptsData[i] === 1) {
+        ctx.fillStyle = '#4ade80'
+      } else if (attemptsData[i] === 2) {
+        ctx.fillStyle = '#fbbf24'
+      } else {
+        ctx.fillStyle = '#f87171'
+      }
+
+      ctx.fillRect(x, y, barWidth, barHeight)
+    }
+
+    // Draw labels
+    ctx.fillStyle = '#888'
+    ctx.font = '12px monospace'
+    ctx.fillText(`${maxAttempts}`, 5, padding + 5)
+    ctx.fillText('1', 5, height - padding + 5)
+  }
+
   if (!results) return null
 
   const avgTime = results.problemHistory.length > 0
     ? (results.problemHistory.reduce((sum, p) => sum + p.timeTaken, 0) / results.problemHistory.length / 1000).toFixed(2)
     : 0
 
-  const problemsPerMinute = results.totalProblems > 0
+  const qpm = results.totalProblems > 0
     ? ((results.totalProblems / results.duration) * 60).toFixed(1)
     : 0
   
@@ -37,23 +184,18 @@ function Results({ results, onRestart, onDashboard }) {
         
         <div className="stats-summary">
           <div className="stat-card">
-            <div className="stat-value">{results.firstTryCorrect}/{results.totalProblems}</div>
-            <div className="stat-label">First-Try Correct</div>
+            <div className="stat-value">{qpm}</div>
+            <div className="stat-label">QPM</div>
           </div>
           
           <div className="stat-card">
             <div className="stat-value highlight">{results.accuracy}%</div>
-            <div className="stat-label">First-Try Accuracy</div>
+            <div className="stat-label">First-Try Acc</div>
           </div>
           
           <div className="stat-card">
             <div className="stat-value">{avgTime}s</div>
             <div className="stat-label">Avg Time</div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-value">{problemsPerMinute}</div>
-            <div className="stat-label">Problems/Min</div>
           </div>
           
           <div className="stat-card">
@@ -63,7 +205,48 @@ function Results({ results, onRestart, onDashboard }) {
           
           <div className="stat-card">
             <div className="stat-value">{totalKeystrokes}</div>
-            <div className="stat-label">Total Keystrokes</div>
+            <div className="stat-label">Keystrokes</div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-value">{totalBackspaces}</div>
+            <div className="stat-label">Backspaces</div>
+          </div>
+        </div>
+
+        <div className="charts-section">
+          <div className="chart-container">
+            <h3 className="chart-title">QPM Over Time</h3>
+            <canvas ref={qpmChartRef} width="600" height="200"></canvas>
+            <div className="chart-legend">
+              <span className="legend-item">
+                <span className="legend-color" style={{background: '#60a5fa'}}></span>
+                QPM
+              </span>
+              <span className="legend-item">
+                <span className="legend-dot" style={{background: '#f87171'}}></span>
+                Errors (attempts &gt; 1)
+              </span>
+            </div>
+          </div>
+
+          <div className="chart-container">
+            <h3 className="chart-title">Attempts per Problem</h3>
+            <canvas ref={attemptsChartRef} width="600" height="200"></canvas>
+            <div className="chart-legend">
+              <span className="legend-item">
+                <span className="legend-color" style={{background: '#4ade80'}}></span>
+                First Try
+              </span>
+              <span className="legend-item">
+                <span className="legend-color" style={{background: '#fbbf24'}}></span>
+                2 Attempts
+              </span>
+              <span className="legend-item">
+                <span className="legend-color" style={{background: '#f87171'}}></span>
+                3+ Attempts
+              </span>
+            </div>
           </div>
         </div>
 
@@ -77,22 +260,15 @@ function Results({ results, onRestart, onDashboard }) {
               >
                 <span className="problem-number">#{index + 1}</span>
                 <span className="problem-text">{problem.display}</span>
-                <span className="user-answer">
-                  {problem.userAnswer}
-                </span>
+                <span className="user-answer">{problem.userAnswer}</span>
                 {!problem.correct && (
-                  <span className="correct-answer">
-                    (correct: {problem.answer})
-                  </span>
+                  <span className="correct-answer">({problem.answer})</span>
                 )}
                 <span className="attempt-info">
-                  {problem.attempts > 1 && `${problem.attempts} tries`}
-                  {problem.attempts === 1 && 'First try'}
-                  {problem.backspaces > 0 && ` (${problem.backspaces} ⌫)`}
+                  {problem.attempts === 1 ? 'First try' : `${problem.attempts} tries`}
+                  {problem.backspaces > 0 && ` • ${problem.backspaces} ⌫`}
                 </span>
-                <span className="time-taken">
-                  {(problem.timeTaken / 1000).toFixed(2)}s
-                </span>
+                <span className="time-taken">{(problem.timeTaken / 1000).toFixed(2)}s</span>
                 <span className="status-icon">
                   {problem.firstTryCorrect ? '✓' : problem.correct ? '○' : '✗'}
                 </span>
