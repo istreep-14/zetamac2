@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './Dashboard.css'
 import { getStatistics, getRecentGameResults } from '../utils/db'
 
-function Dashboard({ setCurrentPage }) {
+function Dashboard({ setCurrentPage, setViewingResult }) {
   const [stats, setStats] = useState(null)
   const [recentGames, setRecentGames] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +24,11 @@ function Dashboard({ setCurrentPage }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGameClick = (game) => {
+    setViewingResult(game)
+    setCurrentPage('result')
   }
 
   if (loading) {
@@ -59,12 +64,12 @@ function Dashboard({ setCurrentPage }) {
             
             <div className="stat-card">
               <div className="stat-value highlight">{stats.averageAccuracy}%</div>
-              <div className="stat-label">Avg Accuracy</div>
+              <div className="stat-label">Avg First-Try</div>
             </div>
             
             <div className="stat-card">
               <div className="stat-value">{stats.bestAccuracy}%</div>
-              <div className="stat-label">Best Accuracy</div>
+              <div className="stat-label">Best First-Try</div>
             </div>
             
             <div className="stat-card">
@@ -74,16 +79,20 @@ function Dashboard({ setCurrentPage }) {
             
             <div className="stat-card">
               <div className="stat-value">{stats.totalCorrect}</div>
-              <div className="stat-label">Total Correct</div>
+              <div className="stat-label">Total First-Try</div>
             </div>
           </div>
 
           {recentGames.length > 0 && (
             <div className="recent-games">
-              <h2 className="section-title">Recent Games</h2>
+              <h2 className="section-title">Recent Games (click to view details)</h2>
               <div className="games-list">
                 {recentGames.map((game) => (
-                  <div key={game.id} className="game-card">
+                  <div 
+                    key={game.id} 
+                    className="game-card clickable"
+                    onClick={() => handleGameClick(game)}
+                  >
                     <div className="game-header">
                       <span className="game-date">
                         {new Date(game.timestamp).toLocaleDateString()} at{' '}
@@ -95,9 +104,9 @@ function Dashboard({ setCurrentPage }) {
                     </div>
                     <div className="game-stats">
                       <div className="game-stat">
-                        <span className="label">Score:</span>
+                        <span className="label">First-Try:</span>
                         <span className="value">
-                          {game.correctAnswers}/{game.totalProblems}
+                          {game.firstTryCorrect || game.correctAnswers}/{game.totalProblems}
                         </span>
                       </div>
                       <div className="game-stat">
@@ -108,6 +117,14 @@ function Dashboard({ setCurrentPage }) {
                         <span className="label">Duration:</span>
                         <span className="value">{game.duration}s</span>
                       </div>
+                      {game.problemHistory && (
+                        <div className="game-stat">
+                          <span className="label">Avg Attempts:</span>
+                          <span className="value">
+                            {(game.problemHistory.reduce((sum, p) => sum + (p.attempts || 1), 0) / game.problemHistory.length).toFixed(1)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
