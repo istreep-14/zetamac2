@@ -18,7 +18,7 @@
 
 .stats-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
@@ -79,7 +79,7 @@
 
 .history-item {
   display: grid;
-  grid-template-columns: 50px 1fr 100px 150px 80px 40px;
+  grid-template-columns: 50px 1fr 100px 120px 120px 80px 40px;
   gap: 1rem;
   align-items: center;
   padding: 1rem;
@@ -122,6 +122,19 @@
 .correct-answer {
   font-size: 0.9rem;
   color: #f87171;
+}
+
+.attempt-info {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.history-item.correct .attempt-info {
+  color: #4ade80;
+}
+
+.history-item.incorrect .attempt-info {
+  color: #fbbf24;
 }
 
 .time-taken {
