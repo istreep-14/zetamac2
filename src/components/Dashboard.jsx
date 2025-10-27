@@ -15,7 +15,7 @@ function Dashboard({ setCurrentPage, setViewingResult }) {
     try {
       const [statistics, recent] = await Promise.all([
         getStatistics(),
-        getRecentGameResults(5)
+        getRecentGameResults(20)
       ])
       setStats(statistics)
       setRecentGames(recent)
@@ -29,6 +29,17 @@ function Dashboard({ setCurrentPage, setViewingResult }) {
   const handleGameClick = (game) => {
     setViewingResult(game)
     setCurrentPage('result')
+  }
+
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Today ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    if (diffDays === 1) return 'Yesterday ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
   }
 
   if (loading) {
@@ -54,12 +65,12 @@ function Dashboard({ setCurrentPage, setViewingResult }) {
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-value">{stats.totalGames}</div>
-              <div className="stat-label">Total Games</div>
+              <div className="stat-label">Tests</div>
             </div>
             
             <div className="stat-card">
               <div className="stat-value">{stats.totalProblems}</div>
-              <div className="stat-label">Total Problems</div>
+              <div className="stat-label">Problems</div>
             </div>
             
             <div className="stat-card">
@@ -69,77 +80,68 @@ function Dashboard({ setCurrentPage, setViewingResult }) {
             
             <div className="stat-card">
               <div className="stat-value">{stats.bestAccuracy}%</div>
-              <div className="stat-label">Best First-Try</div>
+              <div className="stat-label">Best</div>
             </div>
             
             <div className="stat-card">
               <div className="stat-value">{stats.averageProblemsPerMinute}</div>
-              <div className="stat-label">Avg Problems/Min</div>
-            </div>
-            
-            <div className="stat-card">
-              <div className="stat-value">{stats.totalCorrect}</div>
-              <div className="stat-label">Total First-Try</div>
+              <div className="stat-label">QPM</div>
             </div>
           </div>
 
           {recentGames.length > 0 && (
             <div className="recent-games">
-              <h2 className="section-title">Recent Games (click to view details)</h2>
-              <div className="games-list">
-                {recentGames.map((game) => (
-                  <div 
-                    key={game.id} 
-                    className="game-card clickable"
-                    onClick={() => handleGameClick(game)}
-                  >
-                    <div className="game-header">
-                      <span className="game-date">
-                        {new Date(game.timestamp).toLocaleDateString()} at{' '}
-                        {new Date(game.timestamp).toLocaleTimeString()}
-                      </span>
-                      <span className={`game-difficulty ${game.difficulty}`}>
-                        {game.difficulty}
-                      </span>
-                    </div>
-                    <div className="game-stats">
-                      <div className="game-stat">
-                        <span className="label">First-Try:</span>
-                        <span className="value">
-                          {game.firstTryCorrect || game.correctAnswers}/{game.totalProblems}
+              <h2 className="section-title">Recent Tests</h2>
+              <div className="games-table">
+                <div className="table-header">
+                  <div>Date</div>
+                  <div>Difficulty</div>
+                  <div>Duration</div>
+                  <div>Accuracy</div>
+                  <div>QPM</div>
+                  <div>Avg Attempts</div>
+                </div>
+                {recentGames.map((game) => {
+                  const qpm = ((game.totalProblems / game.duration) * 60).toFixed(1)
+                  const avgAttempts = game.problemHistory 
+                    ? (game.problemHistory.reduce((sum, p) => sum + (p.attempts || 1), 0) / game.problemHistory.length).toFixed(1)
+                    : '1.0'
+                  
+                  return (
+                    <div 
+                      key={game.id} 
+                      className="table-row"
+                      onClick={() => handleGameClick(game)}
+                    >
+                      <div className="cell-date">{formatDate(game.timestamp)}</div>
+                      <div className="cell-difficulty">
+                        <span className={`difficulty-badge ${game.difficulty}`}>
+                          {game.difficulty}
                         </span>
                       </div>
-                      <div className="game-stat">
-                        <span className="label">Accuracy:</span>
-                        <span className="value highlight">{game.accuracy}%</span>
+                      <div className="cell-duration">{game.duration}s</div>
+                      <div className="cell-accuracy">
+                        <span className={game.accuracy >= 90 ? 'good' : game.accuracy >= 70 ? 'ok' : 'bad'}>
+                          {game.accuracy}%
+                        </span>
                       </div>
-                      <div className="game-stat">
-                        <span className="label">Duration:</span>
-                        <span className="value">{game.duration}s</span>
-                      </div>
-                      {game.problemHistory && (
-                        <div className="game-stat">
-                          <span className="label">Avg Attempts:</span>
-                          <span className="value">
-                            {(game.problemHistory.reduce((sum, p) => sum + (p.attempts || 1), 0) / game.problemHistory.length).toFixed(1)}
-                          </span>
-                        </div>
-                      )}
+                      <div className="cell-qpm">{qpm}</div>
+                      <div className="cell-attempts">{avgAttempts}</div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
         </>
       ) : (
         <div className="empty-state">
-          <p>No games played yet!</p>
+          <p>No tests completed yet!</p>
           <button 
             className="start-button active"
             onClick={() => setCurrentPage('config')}
           >
-            Start Your First Game
+            Start Your First Test
           </button>
         </div>
       )}
