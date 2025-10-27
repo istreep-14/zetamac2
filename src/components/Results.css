@@ -9,25 +9,25 @@
 }
 
 .results-title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   text-align: center;
   color: #e2b714;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .stats-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .stat-card {
   background: #0f0f0f;
   border: 1px solid #2a2a2a;
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 8px;
+  padding: 1.25rem;
   text-align: center;
   transition: all 0.2s ease;
 }
@@ -38,11 +38,11 @@
 }
 
 .stat-value {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   font-family: 'Roboto Mono', monospace;
   color: #e0e0e0;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .stat-value.highlight {
@@ -50,25 +50,81 @@
 }
 
 .stat-label {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: #888;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+}
+
+.charts-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-container {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.chart-container canvas {
+  width: 100%;
+  height: 200px;
+  display: block;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #888;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .problem-history {
   background: #0f0f0f;
   border: 1px solid #2a2a2a;
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 8px;
+  padding: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .history-title {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #e0e0e0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .history-list {
@@ -79,16 +135,17 @@
 
 .history-item {
   display: grid;
-  grid-template-columns: 50px 1fr 100px 120px 120px 80px 40px;
-  gap: 1rem;
+  grid-template-columns: 40px 1fr 80px 100px 140px 70px 35px;
+  gap: 0.75rem;
   align-items: center;
-  padding: 1rem;
+  padding: 0.65rem 1rem;
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
   font-family: 'Roboto Mono', monospace;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  font-size: 0.85rem;
 }
 
 .history-item:hover {
@@ -106,26 +163,26 @@
 
 .problem-number {
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .problem-text {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #e0e0e0;
 }
 
 .user-answer {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #60a5fa;
 }
 
 .correct-answer {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #f87171;
 }
 
 .attempt-info {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #888;
 }
 
@@ -138,12 +195,12 @@
 }
 
 .time-taken {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #888;
 }
 
 .status-icon {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   text-align: center;
 }
 
@@ -163,14 +220,14 @@
 }
 
 .action-button {
-  padding: 1rem 2.5rem;
-  font-size: 1.1rem;
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
 }
 
 .hint {
   text-align: center;
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 @keyframes fadeIn {
@@ -189,14 +246,13 @@
     grid-template-columns: repeat(2, 1fr);
   }
   
-  .history-item {
+  .charts-section {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
   }
   
-  .problem-number,
-  .time-taken,
-  .status-icon {
+  .history-item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
     font-size: 0.8rem;
   }
   
