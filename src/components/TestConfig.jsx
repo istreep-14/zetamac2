@@ -3,16 +3,16 @@ import './TestConfig.css'
 
 const DIFFICULTY_RANGES = {
   easy: {
-    addition: { minA: 1, maxA: 10, minB: 1, maxB: 10 },
-    multiplication: { minA: 1, maxA: 5, minB: 1, maxB: 5 }
+    addition: { minA: 2, maxA: 60, minB: 2, maxB: 60 },
+    multiplication: { minA: 2, maxA: 12, minB: 2, maxB: 20 }
   },
   normal: {
-    addition: { minA: 1, maxA: 50, minB: 1, maxB: 50 },
-    multiplication: { minA: 1, maxA: 12, minB: 1, maxB: 12 }
+    addition: { minA: 2, maxA: 100, minB: 2, maxB: 100 },
+    multiplication: { minA: 2, maxA: 12, minB: 2, maxB: 100 }
   },
   hard: {
-    addition: { minA: 1, maxA: 100, minB: 1, maxB: 100 },
-    multiplication: { minA: 1, maxA: 25, minB: 1, maxB: 25 }
+    addition: { minA: 2, maxA: 300, minB: 2, maxB: 300 },
+    multiplication: { minA: 2, maxA: 20, minB: 2, maxB: 200 }
   }
 }
 
@@ -22,15 +22,183 @@ const PRESET_TIMES = {
   long: [600, 900, 1800]
 }
 
+function CustomRangeInputs({ currentRanges, onSave }) {
+  const [ranges, setRanges] = useState(currentRanges)
+
+  const updateRange = (operation, field, value) => {
+    const numValue = parseInt(value) || 0
+    setRanges(prev => ({
+      ...prev,
+      [operation]: {
+        ...prev[operation],
+        [field]: numValue
+      }
+    }))
+  }
+
+  const handleSave = () => {
+    // Validate ranges
+    if (ranges.addition.minA > ranges.addition.maxA || 
+        ranges.addition.minB > ranges.addition.maxB ||
+        ranges.multiplication.minA > ranges.multiplication.maxA ||
+        ranges.multiplication.minB > ranges.multiplication.maxB) {
+      alert('Min values cannot be greater than max values')
+      return
+    }
+    onSave(ranges)
+  }
+
+  return (
+    <div className="custom-ranges-section">
+      <div style={{ 
+        marginTop: '1rem', 
+        padding: '1rem', 
+        background: '#1a1a1a', 
+        borderRadius: '8px',
+        border: '1px solid #3a3a3a'
+      }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ 
+            fontSize: '0.9rem', 
+            fontWeight: '600', 
+            color: '#e2b714',
+            marginBottom: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '1px'
+          }}>
+            Addition/Subtraction Ranges
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Min A
+              </label>
+              <input
+                type="number"
+                value={ranges.addition.minA}
+                onChange={(e) => updateRange('addition', 'minA', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Max A
+              </label>
+              <input
+                type="number"
+                value={ranges.addition.maxA}
+                onChange={(e) => updateRange('addition', 'maxA', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Min B
+              </label>
+              <input
+                type="number"
+                value={ranges.addition.minB}
+                onChange={(e) => updateRange('addition', 'minB', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Max B
+              </label>
+              <input
+                type="number"
+                value={ranges.addition.maxB}
+                onChange={(e) => updateRange('addition', 'maxB', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ 
+            fontSize: '0.9rem', 
+            fontWeight: '600', 
+            color: '#e2b714',
+            marginBottom: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '1px'
+          }}>
+            Multiplication/Division Ranges
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Min A
+              </label>
+              <input
+                type="number"
+                value={ranges.multiplication.minA}
+                onChange={(e) => updateRange('multiplication', 'minA', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Max A
+              </label>
+              <input
+                type="number"
+                value={ranges.multiplication.maxA}
+                onChange={(e) => updateRange('multiplication', 'maxA', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Min B
+              </label>
+              <input
+                type="number"
+                value={ranges.multiplication.minB}
+                onChange={(e) => updateRange('multiplication', 'minB', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#888', display: 'block', marginBottom: '0.25rem' }}>
+                Max B
+              </label>
+              <input
+                type="number"
+                value={ranges.multiplication.maxB}
+                onChange={(e) => updateRange('multiplication', 'maxB', e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <button
+          className="custom-time-btn"
+          style={{ width: '100%' }}
+          onClick={handleSave}
+        >
+          Apply Custom Ranges
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
 function TestConfig({ onStart }) {
   const [duration, setDuration] = useState(60)
   const [difficulty, setDifficulty] = useState('normal')
   const [operators, setOperators] = useState({
     addition: true,
     subtraction: true,
-    multiplication: false,
-    division: false
+    multiplication: true,
+    division: true
   })
+  const [customRanges, setCustomRanges] = useState(null)
+  const [showCustomRanges, setShowCustomRanges] = useState(false)
   const [showTimeDropdown, setShowTimeDropdown] = useState(false)
   const [showDifficultyDropdown, setShowDifficultyDropdown] = useState(false)
   const [showOperatorsDropdown, setShowOperatorsDropdown] = useState(false)
@@ -57,9 +225,9 @@ function TestConfig({ onStart }) {
 
     const config = {
       duration,
-      difficulty,
+      difficulty: customRanges ? 'custom' : difficulty,
       operators,
-      ranges: DIFFICULTY_RANGES[difficulty]
+      ranges: customRanges || DIFFICULTY_RANGES[difficulty]
     }
     onStart(config)
   }
@@ -189,7 +357,9 @@ function TestConfig({ onStart }) {
             onClick={() => setShowDifficultyDropdown(!showDifficultyDropdown)}
           >
             <span className="category-badge">🎯</span>
-            <span className="difficulty-label">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
+            <span className="difficulty-label">
+              {customRanges ? 'Custom' : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+            </span>
             <span className="dropdown-arrow">{showDifficultyDropdown ? '▲' : '▼'}</span>
           </button>
 
@@ -198,28 +368,31 @@ function TestConfig({ onStart }) {
               <div className="difficulty-section">
                 <div className="difficulty-buttons">
                   <button
-                    className={`diff-btn ${difficulty === 'easy' ? 'active' : ''}`}
+                    className={`diff-btn ${difficulty === 'easy' && !customRanges ? 'active' : ''}`}
                     onClick={() => {
                       setDifficulty('easy')
-                      setShowDifficultyDropdown(false)
+                      setCustomRanges(null)
+                      setShowCustomRanges(false)
                     }}
                   >
                     Easy
                   </button>
                   <button
-                    className={`diff-btn ${difficulty === 'normal' ? 'active' : ''}`}
+                    className={`diff-btn ${difficulty === 'normal' && !customRanges ? 'active' : ''}`}
                     onClick={() => {
                       setDifficulty('normal')
-                      setShowDifficultyDropdown(false)
+                      setCustomRanges(null)
+                      setShowCustomRanges(false)
                     }}
                   >
                     Normal
                   </button>
                   <button
-                    className={`diff-btn ${difficulty === 'hard' ? 'active' : ''}`}
+                    className={`diff-btn ${difficulty === 'hard' && !customRanges ? 'active' : ''}`}
                     onClick={() => {
                       setDifficulty('hard')
-                      setShowDifficultyDropdown(false)
+                      setCustomRanges(null)
+                      setShowCustomRanges(false)
                     }}
                   >
                     Hard
@@ -228,18 +401,48 @@ function TestConfig({ onStart }) {
 
                 <div className="difficulty-info">
                   <div className="range-display">
-                    <span className="range-label">Addition/Subtraction:</span>
+                    <span className="range-label">Addition/Subtraction (a):</span>
                     <span className="range-value">
-                      {DIFFICULTY_RANGES[difficulty].addition.minA}-{DIFFICULTY_RANGES[difficulty].addition.maxA}
+                      {(customRanges || DIFFICULTY_RANGES[difficulty]).addition.minA}-{(customRanges || DIFFICULTY_RANGES[difficulty]).addition.maxA}
                     </span>
                   </div>
                   <div className="range-display">
-                    <span className="range-label">Multiplication/Division:</span>
+                    <span className="range-label">Addition/Subtraction (b):</span>
                     <span className="range-value">
-                      {DIFFICULTY_RANGES[difficulty].multiplication.minA}-{DIFFICULTY_RANGES[difficulty].multiplication.maxA}
+                      {(customRanges || DIFFICULTY_RANGES[difficulty]).addition.minB}-{(customRanges || DIFFICULTY_RANGES[difficulty]).addition.maxB}
+                    </span>
+                  </div>
+                  <div className="range-display">
+                    <span className="range-label">Multiplication/Division (a):</span>
+                    <span className="range-value">
+                      {(customRanges || DIFFICULTY_RANGES[difficulty]).multiplication.minA}-{(customRanges || DIFFICULTY_RANGES[difficulty]).multiplication.maxA}
+                    </span>
+                  </div>
+                  <div className="range-display">
+                    <span className="range-label">Multiplication/Division (b):</span>
+                    <span className="range-value">
+                      {(customRanges || DIFFICULTY_RANGES[difficulty]).multiplication.minB}-{(customRanges || DIFFICULTY_RANGES[difficulty]).multiplication.maxB}
                     </span>
                   </div>
                 </div>
+
+                <button
+                  className="custom-time-btn"
+                  style={{ width: '100%', marginTop: '1rem' }}
+                  onClick={() => setShowCustomRanges(!showCustomRanges)}
+                >
+                  {showCustomRanges ? 'Hide' : 'Show'} Custom Ranges
+                </button>
+
+                {showCustomRanges && (
+                  <CustomRangeInputs
+                    currentRanges={customRanges || DIFFICULTY_RANGES[difficulty]}
+                    onSave={(ranges) => {
+                      setCustomRanges(ranges)
+                      setShowCustomRanges(false)
+                    }}
+                  />
+                )}
               </div>
             </div>
           )}
