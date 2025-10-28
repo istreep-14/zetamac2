@@ -4,7 +4,7 @@
 }
 
 .results-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -127,89 +127,111 @@
   margin-bottom: 1rem;
 }
 
-.history-list {
-  max-height: 400px;
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  max-height: 500px;
   overflow-y: auto;
   padding-right: 0.5rem;
 }
 
-.history-item {
-  display: grid;
-  grid-template-columns: 40px 1fr 80px 100px 140px 70px 35px;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.65rem 1rem;
+.history-card {
   background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  border: 2px solid #2a2a2a;
   border-radius: 6px;
-  margin-bottom: 0.5rem;
+  padding: 0.75rem;
   font-family: 'Roboto Mono', monospace;
   transition: all 0.15s ease;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.history-item:hover {
+.history-card:hover {
   border-color: #3a3a3a;
   background: #222;
+  transform: translateY(-2px);
 }
 
-.history-item.correct {
+.history-card.correct {
   border-left: 3px solid #4ade80;
 }
 
-.history-item.incorrect {
+.history-card.incorrect {
   border-left: 3px solid #f87171;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
 }
 
 .problem-number {
   color: #666;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.problem-text {
-  font-size: 0.95rem;
-  color: #e0e0e0;
+.status-icon {
+  font-size: 1rem;
 }
 
-.user-answer {
-  font-size: 0.95rem;
-  color: #60a5fa;
-}
-
-.correct-answer {
-  font-size: 0.8rem;
-  color: #f87171;
-}
-
-.attempt-info {
-  font-size: 0.8rem;
-  color: #888;
-}
-
-.history-item.correct .attempt-info {
+.history-card.correct .status-icon {
   color: #4ade80;
 }
 
-.history-item.incorrect .attempt-info {
+.history-card.incorrect .status-icon {
+  color: #f87171;
+}
+
+.problem-text {
+  font-size: 1.1rem;
+  color: #e0e0e0;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.answer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.user-answer {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.correct-answer {
+  color: #f87171;
+  font-size: 0.75rem;
+}
+
+.card-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #888;
+  padding-top: 0.4rem;
+  border-top: 1px solid #2a2a2a;
+}
+
+.history-card.correct .attempt-count {
+  color: #4ade80;
+}
+
+.history-card.incorrect .attempt-count {
   color: #fbbf24;
 }
 
 .time-taken {
-  font-size: 0.8rem;
   color: #888;
-}
-
-.status-icon {
-  font-size: 1.1rem;
-  text-align: center;
-}
-
-.history-item.correct .status-icon {
-  color: #4ade80;
-}
-
-.history-item.incorrect .status-icon {
-  color: #f87171;
 }
 
 .results-actions {
@@ -228,6 +250,25 @@
   text-align: center;
   color: #666;
   font-size: 0.85rem;
+}
+
+/* Scrollbar styling for history grid */
+.history-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.history-grid::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.history-grid::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 4px;
+}
+
+.history-grid::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
 }
 
 @keyframes fadeIn {
@@ -250,10 +291,18 @@
     grid-template-columns: 1fr;
   }
   
-  .history-item {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
-    font-size: 0.8rem;
+  .history-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .history-card {
+    padding: 0.6rem;
+    font-size: 0.75rem;
+  }
+  
+  .problem-text {
+    font-size: 0.95rem;
   }
   
   .results-actions {
