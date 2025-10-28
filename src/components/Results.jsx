@@ -35,21 +35,17 @@ function Results({ results, onRestart, onDashboard }) {
     const chartWidth = width - padding * 2
     const chartHeight = height - padding * 2
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height)
 
-    // Calculate QPM for each problem (problems per minute at that point)
     const history = results.problemHistory
     const qpmData = []
-    const attemptsData = []
-    const errorsData = [] // Track attempts > 1 as errors
+    const errorsData = []
     
     for (let i = 0; i < history.length; i++) {
-      const elapsedTime = (history[i].timestamp - history[0].timestamp) / 1000 / 60 // minutes
+      const elapsedTime = (history[i].timestamp - history[0].timestamp) / 1000 / 60
       const problemsCompleted = i + 1
       const currentQPM = elapsedTime > 0 ? problemsCompleted / elapsedTime : 0
       qpmData.push(currentQPM)
-      attemptsData.push(history[i].attempts || 1)
       errorsData.push(history[i].attempts > 1 ? 1 : 0)
     }
 
@@ -85,7 +81,7 @@ function Results({ results, onRestart, onDashboard }) {
     }
     ctx.stroke()
 
-    // Draw error markers (red dots for attempts > 1)
+    // Draw error markers
     ctx.fillStyle = '#f87171'
     for (let i = 0; i < errorsData.length; i++) {
       if (errorsData[i] > 0) {
@@ -142,7 +138,6 @@ function Results({ results, onRestart, onDashboard }) {
       const barHeight = normalizedAttempts * chartHeight
       const y = height - padding - barHeight
 
-      // Color based on attempts: 1 = green, 2 = yellow, 3+ = red
       if (attemptsData[i] === 1) {
         ctx.fillStyle = '#4ade80'
       } else if (attemptsData[i] === 2) {
@@ -251,27 +246,37 @@ function Results({ results, onRestart, onDashboard }) {
         </div>
 
         <div className="problem-history">
-          <h2 className="history-title">Problem History</h2>
-          <div className="history-list">
+          <h2 className="history-title">Problem History ({results.problemHistory.length} questions)</h2>
+          <div className="history-grid">
             {results.problemHistory.map((problem, index) => (
               <div 
                 key={index} 
-                className={`history-item ${problem.firstTryCorrect ? 'correct' : 'incorrect'}`}
+                className={`history-card ${problem.firstTryCorrect ? 'correct' : 'incorrect'}`}
               >
-                <span className="problem-number">#{index + 1}</span>
-                <span className="problem-text">{problem.display}</span>
-                <span className="user-answer">{problem.userAnswer}</span>
-                {!problem.correct && (
-                  <span className="correct-answer">({problem.answer})</span>
-                )}
-                <span className="attempt-info">
-                  {problem.attempts === 1 ? 'First try' : `${problem.attempts} tries`}
-                  {problem.backspaces > 0 && ` • ${problem.backspaces} ⌫`}
-                </span>
-                <span className="time-taken">{(problem.timeTaken / 1000).toFixed(2)}s</span>
-                <span className="status-icon">
-                  {problem.firstTryCorrect ? '✓' : problem.correct ? '○' : '✗'}
-                </span>
+                <div className="card-header">
+                  <span className="problem-number">Q{index + 1}</span>
+                  <span className="status-icon">
+                    {problem.firstTryCorrect ? '✓' : problem.correct ? '○' : '✗'}
+                  </span>
+                </div>
+                
+                <div className="problem-text">{problem.display}</div>
+                
+                <div className="answer-row">
+                  <span className="user-answer">{problem.userAnswer}</span>
+                  {!problem.correct && (
+                    <span className="correct-answer">({problem.answer})</span>
+                  )}
+                </div>
+                
+                <div className="card-stats">
+                  <span className="attempt-count">
+                    {problem.attempts === 1 ? '1st try' : `${problem.attempts} tries`}
+                  </span>
+                  <span className="time-taken">
+                    {(problem.timeTaken / 1000).toFixed(1)}s
+                  </span>
+                </div>
               </div>
             ))}
           </div>
