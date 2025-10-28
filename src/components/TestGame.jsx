@@ -18,10 +18,9 @@ function TestGame({ config, onFinish }) {
   const currentAttemptDataRef = useRef({
     keystrokes: 0,
     backspaces: 0,
-    attempts: 0,
+    fullLengthReaches: 0,
     lastInputTime: null,
-    inputHistory: [],
-    hasTypedFullLength: false
+    inputHistory: []
   })
 
   useEffect(() => {
@@ -75,10 +74,9 @@ function TestGame({ config, onFinish }) {
     currentAttemptDataRef.current = {
       keystrokes: 0,
       backspaces: 0,
-      attempts: 0,
+      fullLengthReaches: 0,
       lastInputTime: Date.now(),
-      inputHistory: [],
-      hasTypedFullLength: false
+      inputHistory: []
     }
   }
 
@@ -90,30 +88,28 @@ function TestGame({ config, onFinish }) {
     const now = Date.now()
     const attemptData = currentAttemptDataRef.current
     
+    // Track keystrokes and backspaces
     if (value.length < previousValue.length) {
       attemptData.backspaces++
     } else if (value.length > previousValue.length) {
       attemptData.keystrokes++
     }
     
+    // Track when user types a full-length answer
     if (currentProblem && value.length === currentProblem.answer.toString().length) {
-      if (!attemptData.hasTypedFullLength) {
-        attemptData.attempts = 1
-        attemptData.hasTypedFullLength = true
-      } else {
-        const timeSinceLastInput = attemptData.lastInputTime ? now - attemptData.lastInputTime : 0
-        if (timeSinceLastInput > 500 || previousValue === '') {
-          attemptData.attempts++
-        }
+      const timeSinceLastInput = attemptData.lastInputTime ? now - attemptData.lastInputTime : 0
+      // Count as new attempt if it's been more than 300ms or if input was cleared
+      if (timeSinceLastInput > 300 || previousValue === '' || previousValue.length < value.length - 1) {
+        attemptData.fullLengthReaches++
       }
     }
     
-    if (value === '' && previousValue !== '') {
-      attemptData.hasTypedFullLength = false
-    }
-    
     attemptData.lastInputTime = now
-    attemptData.inputHistory.push({ value, timestamp: now, wasBackspace: value.length < previousValue.length })
+    attemptData.inputHistory.push({ 
+      value, 
+      timestamp: now, 
+      wasBackspace: value.length < previousValue.length 
+    })
     
     if (value === '' || /^-?\d+$/.test(value)) {
       setAnswer(value)
@@ -129,8 +125,16 @@ function TestGame({ config, onFinish }) {
     const isCorrect = parseInt(answerValue) === currentProblem.answer
     const timeTaken = Date.now() - currentProblem.timestamp
     const attemptData = currentAttemptDataRef.current
-    const attempts = Math.max(attemptData.attempts, 1)
-    const firstTryCorrect = isCorrect && attempts === 1
+    
+    // Calculate attempts using smart heuristic:
+    // - Base attempts on full-length reaches
+    // - Adjust based on backspaces (every 3 backspaces suggests a retry)
+    // - Consider keystroke patterns
+    const baseAttempts = Math.max(attemptData.fullLengthReaches, 1)
+    const backspaceAttempts = Math.floor(attemptData.backspaces / 3)
+    const estimatedAttempts = Math.max(baseAttempts, backspaceAttempts, 1)
+    
+    const firstTryCorrect = isCorrect && estimatedAttempts === 1
 
     const newProblem = {
       ...currentProblem,
@@ -139,7 +143,7 @@ function TestGame({ config, onFinish }) {
       timeTaken,
       keystrokes: attemptData.keystrokes,
       backspaces: attemptData.backspaces,
-      attempts,
+      attempts: estimatedAttempts,
       firstTryCorrect
     }
 
@@ -167,7 +171,8 @@ function TestGame({ config, onFinish }) {
       accuracy: totalProblems > 0 ? (firstTryCorrect / totalProblems * 100).toFixed(1) : 0,
       duration: config.duration,
       problemHistory: problemHistoryRef.current,
-      config
+      config,
+      timestamp: Date.now()
     }
     onFinish(results)
   }
