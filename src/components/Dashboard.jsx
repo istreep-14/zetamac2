@@ -75,7 +75,7 @@ function Dashboard({ setCurrentPage, setViewingResult }) {
             
             <div className="stat-card">
               <div className="stat-value highlight">{stats.averageAccuracy}%</div>
-              <div className="stat-label">Avg First-Try</div>
+              <div className="stat-label">Avg Accuracy</div>
             </div>
             
             <div className="stat-card">
