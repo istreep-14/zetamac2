@@ -1,6 +1,11 @@
 import './Sidebar.css'
 
 function Sidebar({ currentPage, setCurrentPage }) {
+  const handleStartTest = () => {
+    // Always go to config page to set up the test
+    setCurrentPage('config')
+  }
+
   return (
     <div className="sidebar">
       <div className="logo">
@@ -18,7 +23,7 @@ function Sidebar({ currentPage, setCurrentPage }) {
         
         <button 
           className={currentPage === 'config' || currentPage === 'game' ? 'nav-item active' : 'nav-item'}
-          onClick={() => setCurrentPage('config')}
+          onClick={handleStartTest}
         >
           <span className="icon">🎮</span>
           <span>Start Test</span>
