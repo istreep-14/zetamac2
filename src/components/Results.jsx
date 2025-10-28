@@ -190,7 +190,7 @@ function Results({ results, onRestart, onDashboard }) {
           
           <div className="stat-card">
             <div className="stat-value highlight">{results.accuracy}%</div>
-            <div className="stat-label">First-Try Acc</div>
+            <div className="stat-label">Accuracy</div>
           </div>
           
           <div className="stat-card">
