@@ -1,214 +1,321 @@
-import { useState, useEffect, useRef } from 'react'
-import './TestGame.css'
+import { useState, useEffect } from 'react'
+import './TestConfig.css'
 
-function TestGame({ config, onFinish }) {
-  const [timeLeft, setTimeLeft] = useState(config.duration)
-  const [currentProblem, setCurrentProblem] = useState(null)
-  const [answer, setAnswer] = useState('')
-  const [problemHistory, setProblemHistory] = useState([])
-  const [correctCount, setCorrectCount] = useState(0)
-  const [totalAttempts, setTotalAttempts] = useState(0)
-  const inputRef = useRef(null)
-  const timerRef = useRef(null)
-  
-  const problemHistoryRef = useRef([])
-  const correctCountRef = useRef(0)
-  const totalAttemptsRef = useRef(0)
-  
-  const currentAttemptDataRef = useRef({
-    keystrokes: 0,
-    backspaces: 0,
-    attempts: 0,
-    lastInputTime: null,
-    inputHistory: [],
-    hasTypedFullLength: false
+const DIFFICULTY_RANGES = {
+  easy: {
+    addition: { minA: 1, maxA: 10, minB: 1, maxB: 10 },
+    multiplication: { minA: 1, maxA: 5, minB: 1, maxB: 5 }
+  },
+  normal: {
+    addition: { minA: 1, maxA: 50, minB: 1, maxB: 50 },
+    multiplication: { minA: 1, maxA: 12, minB: 1, maxB: 12 }
+  },
+  hard: {
+    addition: { minA: 1, maxA: 100, minB: 1, maxB: 100 },
+    multiplication: { minA: 1, maxA: 25, minB: 1, maxB: 25 }
+  }
+}
+
+const PRESET_TIMES = {
+  quick: [15, 30, 60],
+  standard: [120, 180, 300],
+  long: [600, 900, 1800]
+}
+
+function TestConfig({ onStart }) {
+  const [duration, setDuration] = useState(60)
+  const [difficulty, setDifficulty] = useState('normal')
+  const [operators, setOperators] = useState({
+    addition: true,
+    subtraction: true,
+    multiplication: false,
+    division: false
   })
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false)
+  const [showDifficultyDropdown, setShowDifficultyDropdown] = useState(false)
+  const [showOperatorsDropdown, setShowOperatorsDropdown] = useState(false)
+  const [customTime, setCustomTime] = useState('')
 
   useEffect(() => {
-    generateNewProblem()
-    inputRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current)
-          setTimeout(() => endGame(), 0)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(timerRef.current)
-  }, [])
-
-  const generateNewProblem = () => {
-    const activeOperators = Object.keys(config.operators).filter(op => config.operators[op])
-    if (activeOperators.length === 0) return null
-
-    const operator = activeOperators[Math.floor(Math.random() * activeOperators.length)]
-    const ranges = config.ranges
-    let problem
-    
-    if (operator === 'addition') {
-      const a = randomInRange(ranges.addition.minA, ranges.addition.maxA)
-      const b = randomInRange(ranges.addition.minB, ranges.addition.maxB)
-      problem = { type: 'addition', display: `${a} + ${b}`, answer: a + b, timestamp: Date.now() }
-    } else if (operator === 'subtraction') {
-      const a = randomInRange(ranges.addition.minA, ranges.addition.maxA)
-      const b = randomInRange(ranges.addition.minB, ranges.addition.maxB)
-      const c = a + b
-      problem = { type: 'subtraction', display: `${c} - ${a}`, answer: b, timestamp: Date.now() }
-    } else if (operator === 'multiplication') {
-      const a = randomInRange(ranges.multiplication.minA, ranges.multiplication.maxA)
-      const b = randomInRange(ranges.multiplication.minB, ranges.multiplication.maxB)
-      problem = { type: 'multiplication', display: `${a} × ${b}`, answer: a * b, timestamp: Date.now() }
-    } else {
-      const a = randomInRange(ranges.multiplication.minA, ranges.multiplication.maxA)
-      const b = randomInRange(ranges.multiplication.minB, ranges.multiplication.maxB)
-      const c = a * b
-      problem = { type: 'division', display: `${c} ÷ ${a}`, answer: b, timestamp: Date.now() }
-    }
-    
-    setCurrentProblem(problem)
-    currentAttemptDataRef.current = {
-      keystrokes: 0,
-      backspaces: 0,
-      attempts: 0,
-      lastInputTime: Date.now(),
-      inputHistory: [],
-      hasTypedFullLength: false
-    }
-  }
-
-  const randomInRange = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
-
-  const handleAnswerChange = (e) => {
-    const value = e.target.value
-    const previousValue = answer
-    const now = Date.now()
-    const attemptData = currentAttemptDataRef.current
-    
-    if (value.length < previousValue.length) {
-      attemptData.backspaces++
-    } else if (value.length > previousValue.length) {
-      attemptData.keystrokes++
-    }
-    
-    if (currentProblem && value.length === currentProblem.answer.toString().length) {
-      if (!attemptData.hasTypedFullLength) {
-        attemptData.attempts = 1
-        attemptData.hasTypedFullLength = true
-      } else {
-        const timeSinceLastInput = attemptData.lastInputTime ? now - attemptData.lastInputTime : 0
-        if (timeSinceLastInput > 500 || previousValue === '') {
-          attemptData.attempts++
-        }
+    const handleKeyPress = (e) => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault()
+        handleStart()
       }
     }
     
-    if (value === '' && previousValue !== '') {
-      attemptData.hasTypedFullLength = false
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [duration, difficulty, operators])
+
+  const handleStart = () => {
+    const activeOperators = Object.values(operators).some(v => v)
+    if (!activeOperators) {
+      alert('Please select at least one operator')
+      return
     }
-    
-    attemptData.lastInputTime = now
-    attemptData.inputHistory.push({ value, timestamp: now, wasBackspace: value.length < previousValue.length })
-    
-    if (value === '' || /^-?\d+$/.test(value)) {
-      setAnswer(value)
-      if (value !== '' && currentProblem && parseInt(value) === currentProblem.answer) {
-        setTimeout(() => checkAnswer(value), 0)
-      }
+
+    const config = {
+      duration,
+      difficulty,
+      operators,
+      ranges: DIFFICULTY_RANGES[difficulty]
+    }
+    onStart(config)
+  }
+
+  const toggleOperator = (op) => {
+    setOperators(prev => ({ ...prev, [op]: !prev[op] }))
+  }
+
+  const setPresetTime = (time) => {
+    setDuration(time)
+    setShowTimeDropdown(false)
+  }
+
+  const handleCustomTime = () => {
+    const time = parseInt(customTime)
+    if (time && time > 0 && time <= 3600) {
+      setDuration(time)
+      setCustomTime('')
+      setShowTimeDropdown(false)
     }
   }
 
-  const checkAnswer = (answerValue) => {
-    if (answerValue === '' || !currentProblem) return
-
-    const isCorrect = parseInt(answerValue) === currentProblem.answer
-    const timeTaken = Date.now() - currentProblem.timestamp
-    const attemptData = currentAttemptDataRef.current
-    const attempts = Math.max(attemptData.attempts, 1)
-    const firstTryCorrect = isCorrect && attempts === 1
-
-    const newProblem = {
-      ...currentProblem,
-      userAnswer: parseInt(answerValue),
-      correct: isCorrect,
-      timeTaken,
-      keystrokes: attemptData.keystrokes,
-      backspaces: attemptData.backspaces,
-      attempts,
-      firstTryCorrect
-    }
-
-    problemHistoryRef.current = [...problemHistoryRef.current, newProblem]
-    if (firstTryCorrect) correctCountRef.current += 1
-    totalAttemptsRef.current += 1
-
-    setProblemHistory(prev => [...prev, newProblem])
-    if (firstTryCorrect) setCorrectCount(prev => prev + 1)
-    setTotalAttempts(prev => prev + 1)
-    
-    setAnswer('')
-    generateNewProblem()
-  }
-
-  const endGame = () => {
-    const firstTryCorrect = problemHistoryRef.current.filter(p => p.firstTryCorrect).length
-    const totalProblems = totalAttemptsRef.current
-    
-    const results = {
-      totalProblems,
-      correctAnswers: firstTryCorrect,
-      firstTryCorrect,
-      eventuallyCorrect: problemHistoryRef.current.filter(p => p.correct).length,
-      accuracy: totalProblems > 0 ? (firstTryCorrect / totalProblems * 100).toFixed(1) : 0,
-      duration: config.duration,
-      problemHistory: problemHistoryRef.current,
-      config
-    }
-    onFinish(results)
+  const getOperatorsPreview = () => {
+    const activeOps = []
+    if (operators.addition) activeOps.push('+')
+    if (operators.subtraction) activeOps.push('−')
+    if (operators.multiplication) activeOps.push('×')
+    if (operators.division) activeOps.push('÷')
+    return activeOps.join('  ') || 'None'
   }
 
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    if (seconds < 60) return `${seconds}s`
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+    return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
   }
 
-  const currentAccuracy = totalAttempts > 0 ? ((correctCount / totalAttempts) * 100).toFixed(0) : 0
-
   return (
-    <div className="test-game">
-      <div className="game-header">
-        <div className="timer">{formatTime(timeLeft)}</div>
-        <div className="stats">
-          <span className="stat correct">{correctCount} correct</span>
-          <span className="stat total">{totalAttempts} total</span>
-          <span className="stat accuracy">{currentAccuracy}% accuracy</span>
-        </div>
-      </div>
+    <div className="test-config">
+      <div className="config-container chess-style">
+        <h1 className="config-title">Configure Test</h1>
 
-      <div className="game-content">
-        {currentProblem && (
-          <>
-            <div className="problem-display">{currentProblem.display}</div>
-            <input
-              ref={inputRef}
-              type="text"
-              value={answer}
-              onChange={handleAnswerChange}
-              className="answer-input"
-              placeholder="?"
-              autoFocus
-            />
-          </>
-        )}
+        {/* Time Control */}
+        <div className="config-section time-control-header">
+          <button 
+            className="dropdown-trigger"
+            onClick={() => setShowTimeDropdown(!showTimeDropdown)}
+          >
+            <span className="category-badge">⏱️ Time</span>
+            <span className="selected-time">{formatTime(duration)}</span>
+            <span className="dropdown-arrow">{showTimeDropdown ? '▲' : '▼'}</span>
+          </button>
+
+          {showTimeDropdown && (
+            <div className="dropdown-panel">
+              <div className="time-category">
+                <div className="category-header">Quick</div>
+                <div className="time-options">
+                  {PRESET_TIMES.quick.map(time => (
+                    <button
+                      key={time}
+                      className={`time-btn ${duration === time ? 'active' : ''}`}
+                      onClick={() => setPresetTime(time)}
+                    >
+                      {formatTime(time)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="time-category">
+                <div className="category-header">Standard</div>
+                <div className="time-options">
+                  {PRESET_TIMES.standard.map(time => (
+                    <button
+                      key={time}
+                      className={`time-btn ${duration === time ? 'active' : ''}`}
+                      onClick={() => setPresetTime(time)}
+                    >
+                      {formatTime(time)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="time-category">
+                <div className="category-header">Long</div>
+                <div className="time-options">
+                  {PRESET_TIMES.long.map(time => (
+                    <button
+                      key={time}
+                      className={`time-btn ${duration === time ? 'active' : ''}`}
+                      onClick={() => setPresetTime(time)}
+                    >
+                      {formatTime(time)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="custom-time-section">
+                <input
+                  type="number"
+                  className="custom-time-input"
+                  placeholder="Custom (seconds)"
+                  value={customTime}
+                  onChange={(e) => setCustomTime(e.target.value)}
+                  min="1"
+                  max="3600"
+                />
+                <button 
+                  className="custom-time-btn"
+                  onClick={handleCustomTime}
+                  disabled={!customTime || parseInt(customTime) <= 0}
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Difficulty */}
+        <div className="config-section">
+          <button 
+            className="dropdown-trigger"
+            onClick={() => setShowDifficultyDropdown(!showDifficultyDropdown)}
+          >
+            <span className="category-badge">🎯</span>
+            <span className="difficulty-label">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
+            <span className="dropdown-arrow">{showDifficultyDropdown ? '▲' : '▼'}</span>
+          </button>
+
+          {showDifficultyDropdown && (
+            <div className="dropdown-panel">
+              <div className="difficulty-section">
+                <div className="difficulty-buttons">
+                  <button
+                    className={`diff-btn ${difficulty === 'easy' ? 'active' : ''}`}
+                    onClick={() => {
+                      setDifficulty('easy')
+                      setShowDifficultyDropdown(false)
+                    }}
+                  >
+                    Easy
+                  </button>
+                  <button
+                    className={`diff-btn ${difficulty === 'normal' ? 'active' : ''}`}
+                    onClick={() => {
+                      setDifficulty('normal')
+                      setShowDifficultyDropdown(false)
+                    }}
+                  >
+                    Normal
+                  </button>
+                  <button
+                    className={`diff-btn ${difficulty === 'hard' ? 'active' : ''}`}
+                    onClick={() => {
+                      setDifficulty('hard')
+                      setShowDifficultyDropdown(false)
+                    }}
+                  >
+                    Hard
+                  </button>
+                </div>
+
+                <div className="difficulty-info">
+                  <div className="range-display">
+                    <span className="range-label">Addition/Subtraction:</span>
+                    <span className="range-value">
+                      {DIFFICULTY_RANGES[difficulty].addition.minA}-{DIFFICULTY_RANGES[difficulty].addition.maxA}
+                    </span>
+                  </div>
+                  <div className="range-display">
+                    <span className="range-label">Multiplication/Division:</span>
+                    <span className="range-value">
+                      {DIFFICULTY_RANGES[difficulty].multiplication.minA}-{DIFFICULTY_RANGES[difficulty].multiplication.maxA}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Operators */}
+        <div className="config-section">
+          <button 
+            className="dropdown-trigger"
+            onClick={() => setShowOperatorsDropdown(!showOperatorsDropdown)}
+          >
+            <span className="category-badge">🔢</span>
+            <span className="operators-preview">{getOperatorsPreview()}</span>
+            <span className="dropdown-arrow">{showOperatorsDropdown ? '▲' : '▼'}</span>
+          </button>
+
+          {showOperatorsDropdown && (
+            <div className="dropdown-panel">
+              <div className="operators-section">
+                <div className="section-label">Select Operators</div>
+                <div className="operators-grid">
+                  <label className="operator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={operators.addition}
+                      onChange={() => toggleOperator('addition')}
+                    />
+                    <span className="operator-symbol">+</span>
+                    <span className="operator-name">Addition</span>
+                  </label>
+
+                  <label className="operator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={operators.subtraction}
+                      onChange={() => toggleOperator('subtraction')}
+                    />
+                    <span className="operator-symbol">−</span>
+                    <span className="operator-name">Subtraction</span>
+                  </label>
+
+                  <label className="operator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={operators.multiplication}
+                      onChange={() => toggleOperator('multiplication')}
+                    />
+                    <span className="operator-symbol">×</span>
+                    <span className="operator-name">Multiplication</span>
+                  </label>
+
+                  <label className="operator-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={operators.division}
+                      onChange={() => toggleOperator('division')}
+                    />
+                    <span className="operator-symbol">÷</span>
+                    <span className="operator-name">Division</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Start Button */}
+        <div className="start-section">
+          <button className="start-button active" onClick={handleStart}>
+            Start Test
+          </button>
+          <p className="hint">Press <kbd>Space</kbd> or <kbd>Enter</kbd> to start</p>
+        </div>
       </div>
     </div>
   )
 }
 
-export default TestGame
+export default TestConfig
