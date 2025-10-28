@@ -185,9 +185,9 @@ function TestGame({ config, onFinish }) {
       <div className="game-header">
         <div className="timer">{formatTime(timeLeft)}</div>
         <div className="stats">
-          <span className="stat correct">{correctCount} first-try</span>
+          <span className="stat correct">{correctCount} correct</span>
           <span className="stat total">{totalAttempts} total</span>
-          <span className="stat accuracy">{currentAccuracy}% first-try</span>
+          <span className="stat accuracy">{currentAccuracy}% accuracy</span>
         </div>
       </div>
 
